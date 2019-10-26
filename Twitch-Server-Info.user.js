@@ -2,13 +2,13 @@
 // @name        Twitch-Server-Info
 // @namespace   Twitch-Server-Info
 // @version     0.0.6
-// @author      Nomo
+// @author      Nomo, SJang1(fork)
 // @description Check Twitch server location.
-// @icon        https://raw.githubusercontent.com/nomomo/Twitch-Server-Info/master/images/logo.png
-// @supportURL  https://github.com/nomomo/Twitch-Server-Info/issues
-// @homepageURL https://github.com/nomomo/Twitch-Server-Info/
-// @downloadURL https://raw.githubusercontent.com/nomomo/Twitch-Server-Info/master/Twitch-Server-Info.user.js
-// @updateURL   https://raw.githubusercontent.com/nomomo/Twitch-Server-Info/master/Twitch-Server-Info.user.js
+// @icon        https://raw.githubusercontent.com/SJang1/Twitch-Server-Info/master/images/logo.png
+// @supportURL  https://github.com/SJang1/Twitch-Server-Info/issues
+// @homepageURL https://github.com/SJang1/Twitch-Server-Info/
+// @downloadURL https://raw.githubusercontent.com/SJang1/Twitch-Server-Info/master/Twitch-Server-Info.user.js
+// @updateURL   https://raw.githubusercontent.com/SJang1/Twitch-Server-Info/master/Twitch-Server-Info.user.js
 // @include     *://*.twitch.tv/*
 // @require     http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js
 // @run-at      document-start
@@ -19,6 +19,16 @@
 // @grant       unsafeWindow
 // @grant       GM_registerMenuCommand
 // ==/UserScript==
+
+////////////////////////////////////////////////////////////////////////////////////
+// Set Your Tries to fix Twitch server
+////////////////////////////////////////////////////////////////////////////////////
+var ServerName = ["sel", "sea"]; // server you want to get into
+var UpdateTries = 15; // how many times to try fix server
+var UpdateDelayTime = 500; // ms
+
+
+
 /*jshint multistr: true */
 if (window.TWITCH_SERVER_INFO === undefined) {
     unsafeWindow.TWITCH_SERVER_INFO = true;
@@ -30,7 +40,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
         Date.prototype.format = function (f) {
             if (!this.valueOf()) return " ";
 
-            var weekName = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+            var weekName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
             var d = this;
             var h = d.getHours() % 12;
 
@@ -80,7 +90,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
     })();
 
 
-    // 디버깅용 함수
+    // for debug
     var NOMO_DEBUG = function ( /**/ ) {
         if (nomo_global.DEBUG) {
             var args = arguments,
@@ -95,7 +105,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
         }
     };
 
-    // 메시지 팝업
+    // for message
     var simple_message = function(msg, $elem){
         if($elem === undefined){
             $elem = $("body");
@@ -129,20 +139,20 @@ if (window.TWITCH_SERVER_INFO === undefined) {
         return (typeof GM_setValue === "function" ? GM_setValue(name, val) : val);
     };
 
-    // 글로벌 변수 선언
+    // global variable
     var nomo_global = {
         "DEBUG": NOMO_getValue("DEBUG", false),
         "DEBUG_FETCH": NOMO_getValue("DEBUG_FETCH", false),
         "LOGGING": NOMO_getValue("LOGGING", false),
         "FIXER": NOMO_getValue("FIXER", false),
-        "FIXER_SERVER": NOMO_getValue("FIXER_SERVER", ["sel"]),
-        "FIXER_ATTEMPT_MAX": NOMO_getValue("FIXER_ATTEMPT_MAX", 15),
-        "FIXER_DELAY": NOMO_getValue("FIXER_DELAY", 500),
+        "FIXER_SERVER": NOMO_getValue("FIXER_SERVER", ServerName),
+        "FIXER_ATTEMPT_MAX": NOMO_getValue("FIXER_ATTEMPT_MAX", UpdateTries),
+        "FIXER_DELAY": NOMO_getValue("FIXER_DELAY", UpdateDelayTime),
         "SERVER_CHANGE_SHOW": NOMO_getValue("SERVER_CHANGE_SHOW", true),
         "prev_server": ""
     };
 
-    // FIXER_SERVER 검증
+    // FIXER_SERVER work?
     if(typeof nomo_global.FIXER_SERVER === "string"){
         if(nomo_global.FIXER_SERVER.indexOf(",") !== -1){
             nomo_global.FIXER_SERVER = nomo_global.FIXER_SERVER.split(",");
@@ -158,27 +168,27 @@ if (window.TWITCH_SERVER_INFO === undefined) {
     ////////////////////////////////////////////////////////////////////////////////////
     // Console Interface
     ////////////////////////////////////////////////////////////////////////////////////
-    // 디버그 모드를 전환하려면 console 창에 TWITCH_SERVER_INFO_DEBUG() 를 붙여넣기 하세요.
+    // input TWITCH_SERVER_INFO_DEBUG() at console to debug
     unsafeWindow.TWITCH_SERVER_INFO_DEBUG = function () {
         nomo_global.DEBUG = !nomo_global.DEBUG;
         NOMO_setValue("DEBUG", nomo_global.DEBUG);
         return "DEBUG: " + nomo_global.DEBUG;
     };
 
-    // LOGGING 모드를 전환하려면 console 창에 TWITCH_SERVER_INFO_LOGGING() 을 붙여넣기 하세요.
+    // input TWITCH_SERVER_INFO_LOGGING() at console for logging
     unsafeWindow.TWITCH_SERVER_INFO_LOGGING = function () {
         nomo_global.LOGGING = !nomo_global.LOGGING;
         NOMO_setValue("LOGGING", nomo_global.LOGGING);
         return "LOGGING: " + nomo_global.LOGGING;
     };
 
-    // LOG를 클리어 하려면 console 창에 TWITCH_SERVER_INFO_CLEARLOG() 을 붙여넣기 하세요.
+    // input TWITCH_SERVER_INFO_CLEARLOG() at console to clear the logs
     unsafeWindow.TWITCH_SERVER_INFO_CLEARLOG = function () {
         NOMO_setValue("LOG", []);
         return "CLEAR LOG";
     };
 
-    // LOG를 콘솔창에 찍으려면 console 창에 TWITCH_SERVER_INFO_SHOWLOG() 을 붙여넣기 하세요.
+    // input TWITCH_SERVER_INFO_SHOWLOG() at console to show the logs
     unsafeWindow.TWITCH_SERVER_INFO_SHOWLOG = function () {
         var log_data = NOMO_getValue("LOG", []);
         for (var key in log_data) {
@@ -203,11 +213,11 @@ if (window.TWITCH_SERVER_INFO === undefined) {
         if (!nomo_global.LOGGING){
             return;
         }
-        // unix time 시간을 ms 버리고 s 단위로 저장한다.
+        // change unix time as ms to s
         var date_n = Number(new Date());
         var date_s = String(date_n).substr(0, String(date_n).length - 3);
 
-        // 기존 데이터 불러옴
+        // set data
         var log_data = NOMO_getValue("LOG", []);
         var new_log_data = [date_s].concat(log);
         log_data.unshift(new_log_data);
@@ -218,7 +228,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
         NOMO_DEBUG("로깅 완료", new_log_data);
     };
 
-    // 설정 메뉴 추가 및 관리
+    // set menu settings
     var GM_Setting_Bootstrap = 'GM_Setting_Bootstrap';
     if (typeof GM_registerMenuCommand === "function") {
         GM_registerMenuCommand("Change Notification Setting", function () {
@@ -232,7 +242,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
         });
     }
 
-    // 서버 리스트 1 - 현재 사용 안 함
+    // server list 1 - not in use
     // var server_list = [
     //     ["GL", "Edgecast", "g1.edgecast.hls.ttvnw.net"],
     //     ["US", "San Francisco", "video-edge-2ca3e4.sfo01.hls.ttvnw.net"],
@@ -260,8 +270,8 @@ if (window.TWITCH_SERVER_INFO === undefined) {
     //     ["AS", "Seoul", "video-edge-0a9354.sel03.hls.ttvnw.net"]
     // ];
 
-    // 서버 리스트 2
-    // 다음을 참고: https://twitchstatus.com/
+    // server list 2
+    // more info: https://twitchstatus.com/
     var server_list_2 = [
         ["hkg", "AS: Hong Kong"],
         ["sel", "AS: Seoul, South Korea"],
@@ -314,7 +324,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
         ["akamai", "Akamai"],
     ];
 
-    // 스타일 추가
+    // styles
     if (typeof GM_addStyle === "function") {
         GM_addStyle( /*css*/ `
             div.player-buttons-right #current_server{
@@ -448,19 +458,19 @@ if (window.TWITCH_SERVER_INFO === undefined) {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
-    // Worker 선언자 탈취 및 덮어쓰기
+    // get Worker
     ////////////////////////////////////////////////////////////////////////////////////
     var realWorker = unsafeWindow.Worker;
     unsafeWindow.Worker = function (input) {
-        // 명시적으로 String 으로 재변환한다
+        // change String
         var newInput = String(input);
         NOMO_DEBUG("newInput", newInput);
 
-        // 19-09-18 기준 wasmworker 버전: 2.14.0
+        // 19-09-18 wasmworker version: 2.14.0
         var myBlob = "importScripts('https://cvp.twitch.tv/2.14.0/wasmworker.min.js')"; // ""
 
-        // worker 버전이 바뀔 수도 있으므로 매번 체크
-        // return 해야 하므로 async false 사용. 성능에는 별 영향 없다.
+        // check worker version
+        // use async false to return
         $.ajax({
                 url: newInput,
                 type: "GET",
@@ -479,7 +489,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
                 NOMO_DEBUG("Complete", com);
             });
 
-        // blob 다시쓰기
+        // rewrite blob
         var workerBlob = new Blob(
             [ /*javascript*/ `
                 // global 변수 가져오기
@@ -599,7 +609,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
                 type: 'text/javascript'
             }
         );
-        // blob 다시쓰기 끝
+        // end rewrite blob
 
         var workerBlobUrl = URL.createObjectURL(workerBlob);
         var my_worker = new realWorker(workerBlobUrl);
