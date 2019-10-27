@@ -538,7 +538,7 @@ if (window.TWITCH_SERVER_INFO === undefined) {
                         FIXER_count = 1;
                         NOMO_DEBUG("첫 채널 접속 시 URL 감지됨", input);
                         
-                        // 반복 시작
+                        // ServerFix = true일 때 반복 시작
                         if(FixServer_STATUS == true){
                             while(!FIXED && FIXER_count <= FIXER_ATTEMPT_MAX){
                                 NOMO_DEBUG("서버 자동 잡기 시도 중...");
@@ -602,8 +602,8 @@ if (window.TWITCH_SERVER_INFO === undefined) {
                                 // 여기까지 온 경우 FIXER_DELAY 간격으로 재시도
                                 await sleep(FIXER_DELAY);
 
-                            };  // ServerFix ON인 경우에만 작동 끝
-                        }   // while 문 끝
+                            }  // while 문 끝
+                        };  // ServerFix ON인 경우에만 작동 끝
                     }   // 반복을 위한 if 문 끝
 
                     return originalFetch.apply(this, arguments);
